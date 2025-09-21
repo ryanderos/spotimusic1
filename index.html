@@ -492,6 +492,7 @@
                 <button class="nav-tab" data-tab="offline">📱 Hors ligne</button>
                 <button class="nav-tab" data-tab="library">📚 Bibliothèque</button>
                 <button class="nav-tab" data-tab="playlists">📋 Playlists</button>
+                <button class="nav-tab" data-tab="settings">⚙️ Réglages</button>
             </div>
 
             <div class="content-area">
@@ -500,19 +501,11 @@
                     <div class="welcome-card">
                         <h1>🎵 Bienvenue sur Spotimusic</h1>
                         <p>Découvrez et écoutez vos musiques préférées</p>
-                    </div>
-                    
-                    <div class="api-notice">
-                        <h3>🔧 Configuration requise</h3>
-                        <p>Pour utiliser Spotimusic, vous devez configurer une clé API YouTube :</p>
-                        <ol>
-                            <li>Allez sur <a href="https://console.developers.google.com" target="_blank">Google Cloud Console</a></li>
-                            <li>Créez un projet et activez l'API YouTube Data v3</li>
-                            <li>Générez une clé API</li>
-                            <li>Entrez-la ci-dessous :</li>
-                        </ol>
-                        <input type="text" id="apiKeyInput" placeholder="Entrez votre clé API YouTube..." style="width: 100%; padding: 0.5rem; margin-top: 0.5rem; border-radius: 5px; border: none; background: rgba(255,255,255,0.9); color: #000;">
-                        <button onclick="saveApiKey()" style="margin-top: 0.5rem; padding: 0.5rem 1rem; background: #1e40af; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">Sauvegarder la clé API</button>
+                        <p style="margin-top: 1rem; font-size: 0.9rem; color: rgba(255,255,255,0.8);">
+                            ✅ Application prête à l'emploi !<br>
+                            🔍 Recherchez directement dans l'onglet Recherche<br>
+                            📱 Ajoutez vos MP3 dans l'onglet Hors ligne
+                        </p>
                     </div>
 
                     <div class="section">
@@ -574,6 +567,36 @@
                     <button onclick="createPlaylist()" style="background: linear-gradient(45deg, #1e40af, #3b82f6); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 25px; margin-bottom: 1rem; cursor: pointer;">Créer une playlist</button>
                     <div id="playlistsList"></div>
                 </div>
+
+                <!-- Settings Content -->
+                <div class="settings-content" id="settingsContent" style="display: none;">
+                    <h2>⚙️ Réglages</h2>
+                    
+                    <div class="offline-section">
+                        <h3>🔑 Configuration API YouTube</h3>
+                        <p>Vous pouvez modifier votre clé API YouTube si nécessaire :</p>
+                        <input type="text" id="apiKeyInput" placeholder="Clé API YouTube..." style="width: 100%; padding: 0.75rem; margin: 0.5rem 0; border-radius: 10px; border: none; background: rgba(255,255,255,0.9); color: #000;">
+                        <button onclick="saveApiKey()" style="padding: 0.75rem 1.5rem; background: #1e40af; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold;">Mettre à jour la clé API</button>
+                        <p style="margin-top: 0.5rem; font-size: 0.9rem; color: rgba(255,255,255,0.7);">
+                            ℹ️ Une clé par défaut est déjà configurée. Changez-la seulement si vous avez votre propre clé.
+                        </p>
+                    </div>
+
+                    <div class="storage-info">
+                        <h4>💾 Informations de stockage</h4>
+                        <p id="settingsStorageInfo">Calcul en cours...</p>
+                        <button onclick="clearAllData()" style="background: rgba(239, 68, 68, 0.8); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 10px; cursor: pointer; margin-top: 1rem;">Effacer toutes les données</button>
+                    </div>
+
+                    <div class="offline-section">
+                        <h3>📋 Informations de l'application</h3>
+                        <p>🎵 <strong>Spotimusic v1.0</strong></p>
+                        <p>📱 Application Web Progressive (PWA)</p>
+                        <p>🔍 Recherche via YouTube Data API</p>
+                        <p>💾 Stockage local sécurisé</p>
+                        <p>📱 Compatible mobile et desktop</p>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -605,14 +628,14 @@
     <!-- Removed for now to fix script errors -->
     
     <script>
-        // Global variables
+        // Global variables with default API key
         let currentTrack = null;
         let isPlaying = false;
         let searchResults = [];
         let playlists = JSON.parse(localStorage.getItem('spotimusic-playlists') || '[]');
         let library = JSON.parse(localStorage.getItem('spotimusic-library') || '[]');
         let recentTracks = JSON.parse(localStorage.getItem('spotimusic-recent') || '[]');
-        let apiKey = localStorage.getItem('youtube-api-key') || '';
+        let apiKey = localStorage.getItem('youtube-api-key') || 'AIzaSyAtlEOWpD2G356NupFVmhsIghfmfmDOkX4'; // Default API key
         let offlineTracks = JSON.parse(localStorage.getItem('spotimusic-offline') || '[]');
         let audioPlayer = new Audio();
         let isOfflineMode = false;
@@ -714,7 +737,7 @@
             }
         }
 
-        // Save API key with better validation
+        // Save API key with improved feedback
         function saveApiKey() {
             const inputKey = document.getElementById('apiKeyInput').value.trim();
             
@@ -728,36 +751,14 @@
                 return;
             }
             
-            console.log('💾 Saving API key...');
+            console.log('💾 Updating API key...');
             
             apiKey = inputKey;
             localStorage.setItem('youtube-api-key', apiKey);
             
-            // Hide the API notice
-            const notice = document.querySelector('.api-notice');
-            if (notice) {
-                notice.style.display = 'none';
-            }
+            alert('✅ Clé API mise à jour avec succès !');
             
-            // Show success message
-            const successMsg = document.createElement('div');
-            successMsg.style.cssText = 'background: rgba(34, 197, 94, 0.2); border: 1px solid rgba(34, 197, 94, 0.5); border-radius: 10px; padding: 1rem; margin: 1rem 0; color: #22c55e;';
-            successMsg.innerHTML = '✅ Clé API sauvegardée ! Vous pouvez maintenant utiliser toutes les fonctionnalités.<br><small>🔍 Essayez de rechercher de la musique dans l\'onglet Recherche</small>';
-            
-            const welcomeCard = document.querySelector('.welcome-card');
-            if (welcomeCard && welcomeCard.nextSibling) {
-                welcomeCard.parentNode.insertBefore(successMsg, welcomeCard.nextSibling);
-            }
-            
-            // Enable all tabs
-            document.querySelectorAll('.nav-tab').forEach(tab => {
-                tab.style.pointerEvents = 'auto';
-                tab.style.opacity = '1';
-            });
-            
-            console.log('✅ API Key saved successfully');
-            
-            // Test the API key
+            // Test the new API key
             testApiKey(inputKey);
         }
 
@@ -769,6 +770,7 @@
                 
                 if (data.error) {
                     console.warn('⚠️ API Key test failed:', data.error.message);
+                    alert('⚠️ La clé API ne fonctionne pas correctement. Vérifiez-la sur Google Cloud Console.');
                 } else {
                     console.log('✅ API Key test successful');
                 }
@@ -777,7 +779,7 @@
             }
         }
 
-        // Tab switching
+        // Tab switching with settings tab
         function switchTab(tabName) {
             // Update active tab
             document.querySelectorAll('.nav-tab').forEach(tab => {
@@ -791,6 +793,12 @@
             document.getElementById('offlineContent').style.display = tabName === 'offline' ? 'block' : 'none';
             document.getElementById('libraryContent').classList.toggle('active', tabName === 'library');
             document.getElementById('playlistsContent').classList.toggle('active', tabName === 'playlists');
+            document.getElementById('settingsContent').style.display = tabName === 'settings' ? 'block' : 'none';
+
+            // Update settings storage info when opening settings
+            if (tabName === 'settings') {
+                updateSettingsStorageInfo();
+            }
         }
 
         // Search music with better error handling
